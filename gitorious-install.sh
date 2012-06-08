@@ -19,9 +19,6 @@
 set -eu
 IFS=`printf '\n\t'`
 
-TMPDIR=`mktemp -d /tmp/tmp.XXXXXXXXXX` || exit 1
-trap "rm -rf $TMPDIR" EXIT
-
 # Check environment
 if [ `id -run` != git ]; then
     echo "ERROR: You should run me as user 'git', not '`id -run`'." >&2
@@ -35,10 +32,20 @@ if [ "$DISTRIB_DESCRIPTION" != "$DISTRIB_OK" ]; then
     exit 1
 fi
 
+if [ "$#" -eq 1 ]; then
+    CONFIG="$1"
+else
+    echo >&2 "usage: $0 CONFIGFILE"
+    exit 1
+fi
+
+TMPDIR=`mktemp -d /tmp/tmp.XXXXXXXXXX` || exit 1
+trap "rm -rf $TMPDIR" EXIT
+
 set -x
 
 # Grok configuration
-source gitorious-install.config
+source "$CONFIG"
 
 # Check if all config variable are set
 cat >/dev/null <<EOF
