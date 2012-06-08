@@ -49,6 +49,7 @@ source "$CONFIG"
 
 # Check if all config variable are set
 cat >/dev/null <<EOF
+${GITORIOUS_COMMIT}
 ${MYSQL_PWD}
 ${SERVERNAME}
 ${HTTP_CLONING_SUBDOMAIN}
@@ -93,6 +94,23 @@ git clone git://gitorious.org/gitorious/mainline.git ~/gitorious
 cd ~/gitorious
 git submodule init
 git submodule update
+
+# Checkout a specific commit, and create a branch called 'production'
+cd ~/gitorious
+if [ "$GITORIOUS_COMMIT" != HEAD ]; then
+    git checkout "$GITORIOUS_COMMIT"
+fi
+git checkout -b production
+
+# Add some files to .gitignore
+cd ~/gitorious
+cat >.gitignore <<EOF
+.bundle/
+tmp/stomp/
+vendor/cache/
+EOF
+git add .gitignore
+git commit -m'Add some files to .gitignore' .gitignore
 
 # Put gitorious in the user's PATH
 mkdir -p ~/bin
@@ -417,6 +435,8 @@ patch boot.rb <<'EOF'
  
  module Rails
 EOF
+git add boot.rb
+git commit -m'Require thread is needed' boot.rb
 
 # Fix an annoying use of a deprecated method in the system Ruby
 sudo patch /usr/lib/ruby/vendor_ruby/1.8/rubygems/source_index.rb <<'EOF'
@@ -512,10 +532,16 @@ patch lib/gitorious/authentication/ldap_authentication.rb <<'EOF'
  
        # The actual authentication callback
 EOF
+git add lib/gitorious/authentication/ldap_authentication.rb
+git commit -m'Custom patch for LDAP integration' lib/gitorious/authentication/ldap_authentication.rb
 
 # Custom HTTP_CLONING_SUBDOMAIN configuration
-cd ~/gitorious
-sed -i -e "/HTTP_CLONING_SUBDOMAIN/s/= 'git'/= '${HTTP_CLONING_SUBDOMAIN}'/" app/models/site.rb
+if [ "$HTTP_CLONING_SUBDOMAIN" != 'git' ]; then
+    cd ~/gitorious
+    sed -i -e "/HTTP_CLONING_SUBDOMAIN/s/= 'git'/= '${HTTP_CLONING_SUBDOMAIN}'/" app/models/site.rb
+    git add app/models/site.rb
+    git commit -m'Custom HTTP_CLONING_SUBDOMAIN configuration' app/models/site.rb
+fi
 
 # Configure LDAP integration
 cat >config/authentication.yml <<EOF
