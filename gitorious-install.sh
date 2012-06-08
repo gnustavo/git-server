@@ -51,6 +51,7 @@ source "$CONFIG"
 cat >/dev/null <<EOF
 ${MYSQL_PWD}
 ${SERVERNAME}
+${HTTP_CLONING_SUBDOMAIN}
 ${CERT_PEM}
 ${CERT_KEY}
 ${ADMIN_EMAIL}
@@ -505,6 +506,10 @@ patch lib/gitorious/authentication/ldap_authentication.rb <<'EOF'
  
        # The actual authentication callback
 EOF
+
+# Custom HTTP_CLONING_SUBDOMAIN configuration
+cd ~/gitorious
+sed -i -e "/HTTP_CLONING_SUBDOMAIN/s/= 'git'/= '${HTTP_CLONING_SUBDOMAIN}'/" app/models/site.rb
 
 # Configure LDAP integration
 cat >config/authentication.yml <<EOF

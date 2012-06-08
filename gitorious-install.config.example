@@ -8,6 +8,11 @@ MYSQL_PWD='mysqlsecret'
 # interface. It should be a FQDN.
 SERVERNAME=git.example.com
 
+# A subdomain of SERVERNAME that gitorious will use to come up with
+# HTTP cloning URLs. It must be different from the leftmost part of
+# SERVERNAME, because for some reason Gitorious don't like it.
+HTTP_CLONING_SUBDOMAIN=http
+
 # Path names for the SSL certificate that Apache will use.
 CERT_PEM=/etc/ssl/certs/git.example.com.pem
 CERT_KEY=/etc/ssl/private/git.example.com.key
