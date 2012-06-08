@@ -228,7 +228,6 @@ sudo cp $TMPDIR/gitorious-ssl /etc/apache2/sites-available/
 sudo a2dissite 000-default
 sudo a2ensite gitorious gitorious-ssl
 sudo a2enmod ssl
-sudo service apache2 restart
 
 # Create user gitorious in MySQL
 mysql -u root -p"${MYSQL_PWD}" <<'EOF'
@@ -429,11 +428,77 @@ echo '@hourly cd gitorious && RAILS_ENV=production bundle exec rake ultrasphinx:
 crontab $TMPDIR/cron
 
 # Create Gitorious's admin user
-cd ~git/gitorious
+cd ~/gitorious
 RAILS_ENV=production ruby script/create_admin
 
 # Fix some file permissions
-cd ~git/gitorious
+cd ~/gitorious
 sudo chmod g+s log
 sudo chgrp -R www-data log
 
+# Custom patch LDAP integration
+cd ~/gitorious
+patch lib/gitorious/authentication/ldap_authentication.rb <<'EOF'
+--- ldap_authentication.rb.orig	2012-06-07 20:54:40.000000000 -0300
++++ ldap_authentication.rb	2012-06-07 21:49:53.749187865 -0300
+@@ -20,7 +20,8 @@
+   module Authentication
+     class LDAPAuthentication
+       attr_reader(:server, :port, :encryption, :attribute_mapping, :base_dn,
+-        :connection_type, :distinguished_name_template, :connection, :login_attribute)
++                  :connection_type, :distinguished_name_template, :connection, :login_attribute,  
++                  :bind_dn, :bind_passwd)  
+ 
+       def initialize(options)
+         validate_requirements(options)
+@@ -44,6 +45,8 @@
+         @connection_type = options["connection_type"] || Net::LDAP
+         @callback_class = options["callback_class"].constantize if options.key?("callback_class")
+         build_distinguished_name_template(options["distinguished_name_template"])
++        @bind_dn = options["bind_dn"]  
++        @bind_passwd = options["bind_passwd"]  
+       end
+ 
+       def post_authenticate(options)
+@@ -58,9 +61,18 @@
+       def valid_credentials?(username, password)
+         return false if password.blank?
+ 
+-        @connection  = @connection_type.new({:encryption => encryption, :host => server, :port => port})
+-        connection.auth(build_username(username), password)
+-        return connection.bind
++        @connection = @connection_type.new({:encryption => encryption, :host => server, :port => port})  
++  
++        if bind_dn.blank?  
++          connection.auth(build_username(username), password)  
++          return connection.bind  
++        else  
++          # http://net-ldap.rubyforge.org/Net/LDAP.html#method-i-bind_as  
++          connection.auth(bind_dn, bind_passwd)  
++          return connection.bind_as(:base => base_dn,  
++                                    :filter => username_filter(username),  
++                                    :password => password)  
++        end  
+       end
+ 
+       # The actual authentication callback
+EOF
+
+# Configure LDAP integration
+cat >config/authentication.yml <<EOF
+production:
+  disable_default: false
+
+  methods:
+    - adapter: Gitorious::Authentication::LDAPAuthentication
+      host: ${LDAP_HOST}
+      port: ${LDAP_PORT}
+      base_dn: ${LDAP_BASE_DN}
+      login_attribute: ${LDAP_LOGIN_ATTR}
+      bind_dn: ${LDAP_BIND_DN}
+      bind_passwd: ${LDAP_BIND_PWD}
+      encryption: none
+EOF
+
+# Restart apache
+sudo service apache2 restart
