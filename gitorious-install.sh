@@ -63,6 +63,12 @@ ${LDAP_BIND_DN}
 ${LDAP_BIND_PWD}
 EOF
 
+# Create the git users SSH directory if it doesn't already exist
+cd ~
+if [ ! -e .ssh ]; then
+    mkdir .ssh && chmod 700 .ssh
+fi
+
 # Pre-configure some packages to avoid manual intervention
 sudo apt-get install debconf-utils
 sudo debconf-set-selections <<EOF
