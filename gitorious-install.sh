@@ -40,6 +40,21 @@ set -x
 # Grok configuration
 source gitorious-install.config
 
+# Check if all config variable are set
+cat >/dev/null <<EOF
+${MYSQL_PWD}
+${SERVERNAME}
+${CERT_PEM}
+${CERT_KEY}
+${ADMIN_EMAIL}
+${LDAP_HOST}
+${LDAP_PORT}
+${LDAP_BASE_DN}
+${LDAP_LOGIN_ATTR}
+${LDAP_BIND_DN}
+${LDAP_BIND_PWD}
+EOF
+
 # Pre-configure some packages to avoid manual intervention
 sudo apt-get install debconf-utils
 sudo debconf-set-selections <<EOF
@@ -304,7 +319,7 @@ patch -o gitorious.yml gitorious.sample.yml <<EOF
    # If Gitorious trips on an unrecoverable error, it will send you an email
    # with details if you provide your addresses here.
 -  exception_notification_emails:
-+  exception_notification_emails: ${GITORIOUS_EMAIL}
++  exception_notification_emails: ${ADMIN_EMAIL}
  
    # Messaging queue configuration
    # Gitorious ships with two message queue implementations; Stomp via the
