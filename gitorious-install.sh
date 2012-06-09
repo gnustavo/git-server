@@ -89,6 +89,11 @@ sudo apt-get -y install build-essential zlib1g-dev tcl-dev libexpat1-dev \
     git-cvs ruby rake ruby-daemons ruby-rmagick stompserver \
     libapache2-mod-passenger ruby-bundler sphinxsearch
 
+# Set up git
+git config --global user.name "$GIT_USER_NAME"
+git config --global user.email "$GIT_USER_EMAIL"
+git config --global color.ui true
+
 # Clone gitorious
 git clone "$GITORIOUS_CLONE_URL" ~/gitorious
 cd ~/gitorious
