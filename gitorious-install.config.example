@@ -1,6 +1,10 @@
 # Example configuration file for gitorious-install.sh. Please, revise
 # and define all variables below for your environment.
 
+# This should be the URL from where we will git clone gitorious. If
+# you have a local repository handy the installation can be faster.
+GITORIOUS_CLONE_URL=git://gitorious.org/gitorious/mainline.git
+
 # Select a specific Gitorious commit to be checkout after
 # installation. Leave it as HEAD if you want to use the bleading edge
 # Gitorious. Otherwise, select one of the released tags.

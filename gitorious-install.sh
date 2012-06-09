@@ -90,8 +90,12 @@ sudo apt-get -y install build-essential zlib1g-dev tcl-dev libexpat1-dev \
     libapache2-mod-passenger ruby-bundler sphinxsearch
 
 # Clone gitorious
-git clone git://gitorious.org/gitorious/mainline.git ~/gitorious
+git clone "$GITORIOUS_CLONE_URL" ~/gitorious
 cd ~/gitorious
+if [ "$GITORIOUS_CLONE_URL" != 'git://gitorious.org/gitorious/mainline.git' ]; then
+    # Reset origin to Gitorious official repository
+    git remote set-url origin 'git://gitorious.org/gitorious/mainline.git'
+fi
 git submodule init
 git submodule update
 
