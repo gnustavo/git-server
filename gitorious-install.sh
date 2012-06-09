@@ -113,7 +113,7 @@ git checkout -b production
 
 # Add some files to .gitignore
 cd ~/gitorious
-cat >.gitignore <<EOF
+cat >>.gitignore <<EOF
 .bundle/
 tmp/stomp/
 vendor/cache/
