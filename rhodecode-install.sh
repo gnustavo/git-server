@@ -115,6 +115,14 @@ patch production.ini <<EOF
  #smtp_username = 
  #smtp_password = 
  #smtp_port = 
+@@ -57,6 +57,7 @@
+ container_auth_enabled = false
+ proxypass_auth_enabled = false
+ default_encoding = utf8
++filter-with = proxy-prefix
+
+ ## overwrite schema of clone url
+ ## available vars:
 @@ -75,12 +75,12 @@
  ## default one used here is # with a regex passive group for `#`
  ## {id} will be all groups matched from this pattern
@@ -130,6 +138,15 @@ patch production.ini <<EOF
  
  ## prefix to add to link to indicate it's an url
  ## #314 will be replaced by 
+@@ -314,3 +315,8 @@
+ class=rhodecode.lib.colored_formatter.ColorFormatterSql
+ format= %(asctime)s.%(msecs)03d %(levelname)-5.5s [%(name)s] %(message)s
+ datefmt = %Y-%m-%d %H:%M:%S
++
++[filter:proxy-prefix]
++use = egg:PasteDeploy#prefix
++prefix = /rhodecode
++
 EOF
 
 # Create directories for repos
@@ -243,28 +260,32 @@ patch venv/lib/python*/site-packages/RhodeCode*.egg/rhodecode/templates/admin/re
 EOF
 
 # TODO: Apache proxy integration
-sudo a2enmod proxy_http
+sudo a2enmod proxy_http rewrite
 
 cat >$TMPDIR/apache.conf <<EOF
 <VirtualHost *:80>
-        ServerName ${SERVERNAME}
+    ServerName ${SERVERNAME}
 
-        <Proxy *>
-          Order allow,deny
-          Allow from all
-        </Proxy>
+    RewriteEngine On
+    RewriteRule ^/$ /rhodecode [R,L]
 
-        #important !
-        #Directive to properly generate url (clone url) for pylons
-        ProxyPreserveHost On
+    <Proxy *>
+        Order allow,deny
+        Allow from all
+    </Proxy>
 
+    #important !
+    #Directive to properly generate url (clone url) for pylons
+    ProxyPreserveHost On
+
+    <Location /rhodecode>
         #rhodecode instance
-        ProxyPass / http://127.0.0.1:5000/
-        ProxyPassReverse / http://127.0.0.1:5000/
+        ProxyPass / http://127.0.0.1:5000/rhodecode
+        ProxyPassReverse / http://127.0.0.1:5000/rhodecode
 
         #to enable https use line below
         #SetEnvIf X-Url-Scheme https HTTPS=1
-
+    </Location>
 </VirtualHost>
 EOF
 
