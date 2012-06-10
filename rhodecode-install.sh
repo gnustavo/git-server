@@ -137,14 +137,12 @@ mkdir -p "$REPOS_DIR"
 
 # Setup Rhodecode
 cd ~/rhodecode
-paster setup-rhodecode production.ini <<EOF
-y
-$REPOS_DIR
-$RC_ADMIN
-$RC_PWD
-$RC_PWD
-$EMAIL_TO
-EOF
+echo y | paster setup-rhodecode \
+    --user="$RC_ADMIN" \
+    --password="$RC_PWD" \
+    --email="$EMAIL_TO" \
+    --repos="$REPOS_DIR" \
+    production.ini
 
 # Based on: https://bitbucket.org/marcinkuzminski/rhodecode/raw/2dc4cfa44b25/init.d/rhodecode-daemon2
 cat >$TMPDIR/rhodecode <<'EOF'
