@@ -11,9 +11,9 @@ It's still very crude. Follow this instructions:
 
 * Install a Ubuntu Server 12.04 machine from scratch.
 * Create a user called `git` and log in to it.
-* Copy the files `gitorious-install.sh` and `gitorious-install.config.example` to git's `$HOME`.
-* Edit `gitorious-install.config.example` according to your environment.
-* Run `./gitorious-install.sh gitorious-install.config.example` as the git user.
+* Copy the files `gitorious-install.sh` and `gitorious-install.config` to git's `$HOME`.
+* Edit `gitorious-install.config` according to your environment.
+* Run `./gitorious-install.sh gitorious-install.config` as the git user.
 * Reboot.
 
 The script uses `sudo` in order to invoke some commands as root. So,
@@ -23,5 +23,5 @@ If all goes well you'll only have to enter the Gitorious administrator
 login and password after the end of the installation.
 
 At the end you should be able to point your browser to the
-`SERVERNAME` as configured in `gitorious-install.config.example` and
-log in as admin or as any user in your LDAP directory.
+`SERVERNAME` as configured in `gitorious-install.config` and log in as
+admin or as any user in your LDAP directory.
