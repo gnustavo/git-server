@@ -259,40 +259,74 @@ patch venv/lib/python*/site-packages/RhodeCode*.egg/rhodecode/templates/admin/re
           </div>
 EOF
 
-# TODO: Apache proxy integration
-sudo a2enmod proxy_http rewrite
+# Enable needed Apache modules
+sudo a2enmod proxy_http rewrite ssl
 
-cat >$TMPDIR/apache.conf <<EOF
+# Change Apache configuration for SSL Virtual Hosts.
+sudo patch /etc/apache2/ports.conf <<'EOF'
+--- ports.conf.orig     2012-06-10 18:16:29.097552822 -0300
++++ ports.conf  2012-06-10 18:16:52.385551176 -0300
+@@ -14,6 +14,7 @@
+     # to <VirtualHost *:443>
+     # Server Name Indication for SSL named virtual hosts is currently not
+     # supported by MSIE on Windows XP.
++    NameVirtualHost *:443
+     Listen 443
+ </IfModule>
+
+EOF
+
+sudo patch /etc/apache2/sites-available/default-ssl <<'EOF'
+--- default-ssl.orig    2012-06-10 19:09:01.693695635 -0300
++++ default-ssl 2012-06-10 19:09:10.973694566 -0300
+@@ -1,5 +1,5 @@
+ <IfModule mod_ssl.c>
+-<VirtualHost _default_:443>
++<VirtualHost *:443>
+        ServerAdmin webmaster@localhost
+
+        DocumentRoot /var/www
+EOF
+
+# Create and enable VirtualHosts for git
+cat >$TMPDIR/git <<EOF
 <VirtualHost *:80>
     ServerName ${SERVERNAME}
 
     RewriteEngine On
-    RewriteRule ^/$ /rhodecode [R,L]
-
-    <Proxy *>
-        Order allow,deny
-        Allow from all
-    </Proxy>
-
-    #important !
-    #Directive to properly generate url (clone url) for pylons
-    ProxyPreserveHost On
-
-    <Location /rhodecode>
-        #rhodecode instance
-        ProxyPass / http://127.0.0.1:5000/rhodecode
-        ProxyPassReverse / http://127.0.0.1:5000/rhodecode
-
-        #to enable https use line below
-        #SetEnvIf X-Url-Scheme https HTTPS=1
-    </Location>
+    RewriteRule ^/(.*) https://${SERVERNAME}/\$1 [R,L]
 </VirtualHost>
 EOF
+sudo cp $TMPDIR/git /etc/apache2/sites-available/
 
-sudo cp $TMPDIR/apache.conf /etc/apache2/sites-available/rhodecode
-sudo a2ensite rhodecode
+cat >$TMPDIR/git-ssl <<EOF
+<IfModule mod_ssl.c>
+    <VirtualHost *:443>
+        ServerName ${SERVERNAME}
+        SSLEngine on
+        SSLCertificateFile ${CERT_PEM}
+        SSLCertificateKeyFile ${CERT_KEY}
+        BrowserMatch ".*MSIE.*" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0
+
+        RewriteEngine On
+        RewriteRule ^/$ /rhodecode [R,L]
+
+        <Proxy *>
+            Order allow,deny
+            Allow from all
+        </Proxy>
+
+        ProxyPreserveHost On
+
+        <Location /rhodecode>
+            ProxyPass        http://127.0.0.1:5000/rhodecode
+            ProxyPassReverse http://127.0.0.1:5000/rhodecode
+        </Location>
+    </VirtualHost>
+</IfModule>
+EOF
+sudo cp $TMPDIR/git-ssl /etc/apache2/sites-available/
+
+sudo a2ensite git git-ssl
 
 # TODO: LDAP integration
-
-# TODO: HTTPS access
-
