@@ -70,7 +70,7 @@ if [ ! -e .ssh ]; then
 fi
 
 # Install needed packages
-sudo apt-get -y install python-virtualenv python-ldap libsasl2-dev git python-dev
+sudo apt-get -y install python-virtualenv python-ldap libsasl2-dev git python-dev apache2 
 
 # Set up git
 git config --global user.name "$GIT_USER_NAME"
@@ -242,7 +242,34 @@ patch venv/lib/python*/site-packages/RhodeCode*.egg/rhodecode/templates/admin/re
           </div>
 EOF
 
-# TODO: Apache WSGI integration
+# TODO: Apache proxy integration
+sudo a2enmod proxy_http
+
+cat >$TMPDIR/apache.conf <<EOF
+<VirtualHost *:80>
+        ServerName ${SERVERNAME}
+
+        <Proxy *>
+          Order allow,deny
+          Allow from all
+        </Proxy>
+
+        #important !
+        #Directive to properly generate url (clone url) for pylons
+        ProxyPreserveHost On
+
+        #rhodecode instance
+        ProxyPass / http://127.0.0.1:5000/
+        ProxyPassReverse / http://127.0.0.1:5000/
+
+        #to enable https use line below
+        #SetEnvIf X-Url-Scheme https HTTPS=1
+
+</VirtualHost>
+EOF
+
+sudo cp $TMPDIR/apache.conf /etc/apache2/sites-available/rhodecode
+sudo a2ensite rhodecode
 
 # TODO: LDAP integration
 
