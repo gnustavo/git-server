@@ -227,5 +227,24 @@ sudo cp $TMPDIR/rhodecode /etc/init.d
 sudo chmod 755 /etc/init.d/rhodecode
 sudo update-rc.d rhodecode defaults
 
+# Make git the default repository type
+patch venv/lib/python*/site-packages/RhodeCode*.egg/rhodecode/templates/admin/repos/repo_add_base.html <<'EOF'
+--- ./templates/admin/repos/repo_add_base.html.orig     2012-06-10 12:17:31.469484793 -0300
++++ ./templates/admin/repos/repo_add_base.html  2012-06-10 12:17:47.909470152 -0300
+@@ -38,7 +38,7 @@
+                 <label for="repo_type">${_('Type')}:</label>
+             </div>
+             <div class="input">
+-                ${h.select('repo_type','hg',c.backends,class_="small")}
++                ${h.select('repo_type','git',c.backends,class_="small")}
+                 <span class="help-block">${_('Type of repository to create.')}</span>
+             </div>
+          </div>
+EOF
+
+# TODO: Apache WSGI integration
+
 # TODO: LDAP integration
+
+# TODO: HTTPS access
 
