@@ -2,8 +2,8 @@ Git Server
 ==========
 
 A script to automatize the configuration of a
-[Gitorious](gitorious.org) system on an Ubuntu server. The script is
-heavilly inspired in [this blog
+[Gitorious](http://gitorious.org/) system on an Ubuntu server. The
+script is heavilly inspired in [this blog
 post](http://coding-journal.com/installing-gitorious-on-ubuntu-11-04/),
 but it was developed on a Ubuntu Server 12.04.
 
