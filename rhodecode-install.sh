@@ -260,7 +260,7 @@ patch venv/lib/python*/site-packages/RhodeCode*.egg/rhodecode/templates/admin/re
 EOF
 
 # Enable needed Apache modules
-sudo a2enmod proxy_http rewrite ssl
+sudo a2enmod proxy_http rewrite ssl headers
 
 # Change Apache configuration for SSL Virtual Hosts.
 sudo patch /etc/apache2/ports.conf <<'EOF'
@@ -308,8 +308,19 @@ cat >$TMPDIR/git-ssl <<EOF
         SSLCertificateKeyFile ${CERT_KEY}
         BrowserMatch ".*MSIE.*" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0
 
+        AuthType Basic
+        AuthName "Git authentication"
+        AuthUserFile /etc/apache2/.htpasswd
+        require valid-user
+
+        RequestHeader unset X-Forwarded-User
+
         RewriteEngine On
         RewriteRule ^/$ /rhodecode [R,L]
+        RewriteCond %{LA-U:REMOTE_USER} (.+)
+        RewriteRule .* - [E=RU:%1]
+
+        RequestHeader set X-Forwarded-User %{RU}e
 
         <Proxy *>
             Order allow,deny
