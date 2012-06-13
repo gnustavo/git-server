@@ -53,9 +53,6 @@ ${EMAIL_TO}
 ${ERROR_EMAIL_FROM}
 ${APP_EMAIL_FROM}
 ${SMTP_SERVER}
-${SMTP_USERNAME}
-${SMTP_PASSWORD}
-${SMTP_PORT}
 ${ISSUE_PAT}
 ${ISSUE_SERVER_LINK}
 ${REPOS_DIR}
@@ -64,13 +61,10 @@ ${RC_PWD}
 EOF
 
 # Create the git users SSH directory if it doesn't already exist
-cd ~
-if [ ! -e .ssh ]; then
-    mkdir .ssh && chmod 700 .ssh
-fi
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
 
 # Install needed packages
-sudo apt-get -y install python-virtualenv python-ldap libsasl2-dev git python-dev apache2 
+sudo apt-get -y install python-virtualenv python-ldap libsasl2-dev git python-dev apache2
 
 # Set up git
 git config --global user.name "$GIT_USER_NAME"
@@ -80,15 +74,13 @@ git config --global color.ui true
 # Setup virtual environment for Python
 virtualenv ~/venv
 set +u
-source venv/bin/activate
+source ~/venv/bin/activate
 set -u
 
 # Install RhodeCode
-mkdir ~/rhodecode
+mkdir -p ~/rhodecode
 cd ~/rhodecode
 easy_install rhodecode
-
-# TODO: Install rabbitmq
 
 # Configure RhodeCode
 cd ~/rhodecode
@@ -115,14 +107,6 @@ patch production.ini <<EOF
  #smtp_username = 
  #smtp_password = 
  #smtp_port = 
-@@ -57,6 +57,7 @@
- container_auth_enabled = false
- proxypass_auth_enabled = false
- default_encoding = utf8
-+filter-with = proxy-prefix
-
- ## overwrite schema of clone url
- ## available vars:
 @@ -75,12 +75,12 @@
  ## default one used here is # with a regex passive group for `#`
  ## {id} will be all groups matched from this pattern
@@ -138,15 +122,6 @@ patch production.ini <<EOF
  
  ## prefix to add to link to indicate it's an url
  ## #314 will be replaced by 
-@@ -314,3 +315,8 @@
- class=rhodecode.lib.colored_formatter.ColorFormatterSql
- format= %(asctime)s.%(msecs)03d %(levelname)-5.5s [%(name)s] %(message)s
- datefmt = %Y-%m-%d %H:%M:%S
-+
-+[filter:proxy-prefix]
-+use = egg:PasteDeploy#prefix
-+prefix = /rhodecode
-+
 EOF
 
 # Create directories for repos
@@ -160,6 +135,30 @@ echo y | paster setup-rhodecode \
     --email="$EMAIL_TO" \
     --repos="$REPOS_DIR" \
     production.ini
+
+# Configure filter prefix
+cd ~/rhodecode
+patch production.ini <<'EOF'
+--- production.ini.1    2012-06-12 21:52:18.522894535 -0300
++++ production.ini      2012-06-12 21:52:12.603931008 -0300
+@@ -57,6 +57,7 @@
+ container_auth_enabled = false
+ proxypass_auth_enabled = false
+ default_encoding = utf8
++filter-with = proxy-prefix
+
+ ## overwrite schema of clone url
+ ## available vars:
+@@ -314,3 +315,8 @@
+ class=rhodecode.lib.colored_formatter.ColorFormatterSql
+ format= %(asctime)s.%(msecs)03d %(levelname)-5.5s [%(name)s] %(message)s
+ datefmt = %Y-%m-%d %H:%M:%S
++
++[filter:proxy-prefix]
++use = egg:PasteDeploy#prefix
++prefix = /rhodecode
++
+EOF
 
 # Based on: https://bitbucket.org/marcinkuzminski/rhodecode/raw/2dc4cfa44b25/init.d/rhodecode-daemon2
 cat >$TMPDIR/rhodecode <<'EOF'
@@ -283,9 +282,9 @@ sudo patch /etc/apache2/sites-available/default-ssl <<'EOF'
  <IfModule mod_ssl.c>
 -<VirtualHost _default_:443>
 +<VirtualHost *:443>
-        ServerAdmin webmaster@localhost
+	ServerAdmin webmaster@localhost
 
-        DocumentRoot /var/www
+	DocumentRoot /var/www
 EOF
 
 # Create and enable VirtualHosts for git
@@ -308,30 +307,19 @@ cat >$TMPDIR/git-ssl <<EOF
         SSLCertificateKeyFile ${CERT_KEY}
         BrowserMatch ".*MSIE.*" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0
 
-        AuthType Basic
-        AuthName "Git authentication"
-        AuthUserFile /etc/apache2/.htpasswd
-        require valid-user
-
-        RequestHeader unset X-Forwarded-User
-
         RewriteEngine On
-        RewriteRule ^/$ /rhodecode [R,L]
-        RewriteCond %{LA-U:REMOTE_USER} (.+)
-        RewriteRule .* - [E=RU:%1]
-
-        RequestHeader set X-Forwarded-User %{RU}e
-
-        <Proxy *>
-            Order allow,deny
-            Allow from all
-        </Proxy>
-
-        ProxyPreserveHost On
+        RewriteRule ^/\$ /rhodecode [R,L]
 
         <Location /rhodecode>
-            ProxyPass        http://127.0.0.1:5000/rhodecode
-            ProxyPassReverse http://127.0.0.1:5000/rhodecode
+            AuthType Basic
+            AuthName "Git authentication"
+            AuthUserFile /etc/apache2/.htpasswd
+            require valid-user
+
+            RewriteEngine On
+            RewriteRule /(rhodecode.*) http://127.0.0.1:5000/\$1 [L,P,E=RU:%{REMOTE_USER}]
+
+            RequestHeader set X-Forwarded-User %{RU}e
         </Location>
     </VirtualHost>
 </IfModule>
@@ -341,3 +329,7 @@ sudo cp $TMPDIR/git-ssl /etc/apache2/sites-available/
 sudo a2ensite git git-ssl
 
 # TODO: LDAP integration
+
+# TODO: Install rabbitmq
+
+# TODO: Setting up Whoosh full text search
