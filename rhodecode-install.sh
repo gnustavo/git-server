@@ -359,11 +359,6 @@ cat >$TMPDIR/git-ssl <<EOF
         RewriteRule ^/\$ /rhodecode [R,L]
 
         <Location /rhodecode>
-            AuthType Basic
-            AuthName "Git authentication"
-            AuthUserFile /etc/apache2/.htpasswd
-            require valid-user
-
             RewriteEngine On
             RewriteRule /(rhodecode.*) http://127.0.0.1:5000/\$1 [L,P,E=RU:%{REMOTE_USER}]
 
@@ -375,9 +370,5 @@ EOF
 sudo cp $TMPDIR/git-ssl /etc/apache2/sites-available/
 
 sudo a2ensite git git-ssl
-
-# TODO: LDAP integration
-
-# TODO: Install rabbitmq
 
 # TODO: Setting up Whoosh full text search
