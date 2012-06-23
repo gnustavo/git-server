@@ -206,84 +206,108 @@ patch production.ini <<'EOF'
 +
 EOF
 
-# Based on: https://bitbucket.org/marcinkuzminski/rhodecode/raw/2dc4cfa44b25/init.d/rhodecode-daemon2
+# Based on: https://gist.github.com/2866413#file_rhodecode_init.d.sh
 cat >$TMPDIR/rhodecode <<'EOF'
-#!/bin/sh -e
-########################################
-#### THIS IS A DEBIAN INIT.D SCRIPT ####
-########################################
+#!/bin/sh
 
 ### BEGIN INIT INFO
-# Provides:          rhodecode          
-# Required-Start:    $all
-# Required-Stop:     $all
-# Default-Start:     2 3 4 5
-# Default-Stop:      0 1 6
-# Short-Description: starts instance of rhodecode
-# Description:       starts instance of rhodecode using start-stop-daemon
+# Provides:       rhodecode
+# Required-Start: $all
+# Required-Stop:  $all
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# Short-Description: Starts RhodeCode
 ### END INIT INFO
 
-APP_NAME="rhodecode"
-APP_HOMEDIR="git"
-APP_PATH="/home/$APP_HOMEDIR/$APP_NAME"
+USER=git
 
-CONF_NAME="production.ini"
+VENV_DIR=/home/git/venv
+DATA_DIR=/home/git/rhodecode
 
-PID_PATH="$APP_PATH/$APP_NAME.pid"
-LOG_PATH="$APP_PATH/$APP_NAME.log"
+CELERY_ARGS="$VENV_DIR/bin/paster celeryd $DATA_DIR/production.ini"
+RHODECODE_ARGS="$VENV_DIR/bin/paster serve $DATA_DIR/production.ini"
 
-PYTHON_PATH="/home/$APP_HOMEDIR/venv"
+CELERY_PID_FILE=/var/run/celeryd.pid
+RHODECODE_PID_FILE=/var/run/rhodecode.pid
 
-RUN_AS="git"
-
-DAEMON="$PYTHON_PATH/bin/paster"
-
-DAEMON_OPTS="serve --daemon \
-  --user=$RUN_AS \
-  --group=$RUN_AS \
-  --pid-file=$PID_PATH \
-  --log-file=$LOG_PATH  $APP_PATH/$CONF_NAME"
-
-
-start() {
-  echo "Starting $APP_NAME"
-  PYTHON_EGG_CACHE="/tmp" HOME=/home/$APP_HOMEDIR start-stop-daemon -d $APP_PATH \
-      --start --quiet \
-      --pidfile $PID_PATH \
-      --user $RUN_AS \
-      --exec $DAEMON -- $DAEMON_OPTS
+start_celery() {
+    /sbin/start-stop-daemon \
+        --start \
+        --background \
+        --chuid $USER \
+        --pidfile $CELERY_PID_FILE \
+        --make-pidfile \
+        --exec $VENV_DIR/bin/python -- $CELERY_ARGS
 }
 
-stop() {
-  echo "Stopping $APP_NAME"
-  start-stop-daemon -d $APP_PATH \
-      --stop --quiet \
-      --pidfile $PID_PATH || echo "$APP_NAME - Not running!"
-  
-  if [ -f $PID_PATH ]; then
-    rm $PID_PATH
-  fi
+start_rhodecode() {
+    /sbin/start-stop-daemon \
+        --start \
+        --background \
+        --chuid $USER \
+        --pidfile $RHODECODE_PID_FILE \
+        --make-pidfile \
+        --exec $VENV_DIR/bin/python -- $RHODECODE_ARGS
+}
+
+stop_rhodecode() {
+    /sbin/start-stop-daemon \
+        --stop \
+        --user $USER \
+        --pidfile $RHODECODE_PID_FILE
+}
+
+stop_celery() {
+    /sbin/start-stop-daemon \
+        --stop \
+        --user $USER \
+        --pidfile $CELERY_PID_FILE
 }
 
 case "$1" in
-  start)
-    start
-    ;;
-  stop)
-    stop
-    ;;
-  restart)
-    echo "Restarting $APP_NAME"
-    ### stop ###
-    stop
-    wait
-    ### start ###
-    start
-    ;;
-  *)
-    echo "Usage: $0 {start|stop|restart}"
-    exit 1
+    start)
+        echo "Starting Celery"
+        start_celery
+        echo "Starting RhodeCode"
+        start_rhodecode
+        ;;
+    start_celery)
+        echo "Starting Celery"
+        start_celery
+        ;;
+    start_rhodecode)
+        echo "Starting RhodeCode"
+        start_rhodecode
+        ;;
+    stop)
+        echo "Stopping RhodeCode"
+        stop_rhodecode
+        echo "Stopping Celery"
+        stop_celery
+        ;;
+    stop_rhodecode)
+        echo "Stopping RhodeCode"
+        stop_rhodecode
+        ;;
+    stop_celery)
+        echo "Stopping Celery"
+        stop_celery
+        ;;
+    restart)
+        echo "Stopping RhodeCode and Celery"
+        stop
+        echo "Starting Celery"
+        start_celery
+        echo "Starting RhodeCode"
+        start_rhodecode
+        ;;
+    *)
+        echo "Usage: ./rhodecode {start|stop|restart|start_celery|stop_celery|start_rhodecode|stop_rhodecode}"
+        exit 2
+        ;;
 esac
+
+exit 0
 EOF
 sudo cp $TMPDIR/rhodecode /etc/init.d
 sudo chmod 755 /etc/init.d/rhodecode
