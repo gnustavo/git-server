@@ -19,6 +19,20 @@
 set -eu
 IFS=`printf '\n\t'`
 
+USAGE="usage: `basename $0` [-sq] CONFIGFILE"
+SKIP_INSTALL=0
+QUIET=0
+while getopts :sq OPT; do
+    case $OPT in
+	s) SKIP_INSTALL=1 ;;
+	q) QUIET=1 ;;
+	*)
+	    echo >&2 $USAGE 
+	    exit 2
+    esac
+done
+shift `expr $OPTIND - 1`
+
 # Check environment
 if [ `id -run` != git ]; then
     echo "ERROR: You should run me as user 'git', not '`id -run`'." >&2
@@ -35,14 +49,16 @@ fi
 if [ "$#" -eq 1 ]; then
     CONFIG="$1"
 else
-    echo >&2 "usage: $0 CONFIGFILE"
+    echo >&2 $USAGE
     exit 1
 fi
 
 TMPDIR=`mktemp -d /tmp/tmp.XXXXXXXXXX` || exit 1
 trap "rm -rf $TMPDIR" EXIT
 
-set -x
+if [ $QUIET -eq 0 ]; then
+    set -x
+fi
 
 # Grok configuration
 source "$CONFIG"
@@ -60,31 +76,44 @@ ${RC_ADMIN}
 ${RC_PWD}
 EOF
 
-# Create the git users SSH directory if it doesn't already exist
-mkdir -p ~/.ssh && chmod 700 ~/.ssh
+if [ $SKIP_INSTALL -eq 0 ]; then
+    # Create the git users SSH directory if it doesn't already exist
+    mkdir -p ~/.ssh && chmod 700 ~/.ssh
 
-# Install needed packages
-sudo apt-get -y install python-virtualenv python-ldap libsasl2-dev git python-dev apache2
+    # Install needed packages
+    sudo apt-get -y install python-virtualenv python-ldap libsasl2-dev git python-dev apache2 rabbitmq-server
 
-# Set up git
-git config --global user.name "$GIT_USER_NAME"
-git config --global user.email "$GIT_USER_EMAIL"
-git config --global color.ui true
+    # Set up git
+    git config --global user.name "$GIT_USER_NAME"
+    git config --global user.email "$GIT_USER_EMAIL"
+    git config --global color.ui true
 
-# Setup virtual environment for Python
-virtualenv ~/venv
-set +u
-source ~/venv/bin/activate
-set -u
+    # Setup virtual environment for Python
+    virtualenv --no-site-packages ~/venv
+    set +u
+    source ~/venv/bin/activate
+    set -u
 
-# Install RhodeCode
-mkdir -p ~/rhodecode
-cd ~/rhodecode
-easy_install rhodecode
+    # Install RhodeCode
+    mkdir -p ~/rhodecode
+    cd ~/rhodecode
+    easy_install rhodecode
 
-# Configure RhodeCode
-cd ~/rhodecode
-paster make-config RhodeCode production.ini
+    # Configure RabbitMQ
+    sudo rabbitmqctl add_user ${RC_ADMIN} ${RC_PWD}
+    sudo rabbitmqctl add_vhost rhodevhost
+    sudo rabbitmqctl set_permissions -p rhodevhost ${RC_ADMIN} ".*" ".*" ".*"
+
+    # Configure RhodeCode
+    cd ~/rhodecode
+    paster make-config RhodeCode production.ini
+else
+    set +u
+    source ~/venv/bin/activate
+    set -u
+    cd ~/rhodecode
+fi
+
 patch production.ini <<EOF
 --- production.ini.orig 2012-05-29 10:42:14.197177952 -0300
 +++ production.ini.new  2012-05-29 10:50:12.205185304 -0300
