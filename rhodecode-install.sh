@@ -378,3 +378,7 @@ paster make-index production.ini
 crontab -l >$TMPDIR/cron || true
 echo '@daily cd rhodecode; /home/git/venv/bin/paster make-index production.ini' >>$TMPDIR/cron
 crontab $TMPDIR/cron
+
+# Start up everything
+sudo service rhodecode start
+sudo service apache2 restart
