@@ -314,19 +314,7 @@ sudo chmod 755 /etc/init.d/rhodecode
 sudo update-rc.d rhodecode defaults
 
 # Make git the default repository type
-patch venv/lib/python*/site-packages/RhodeCode*.egg/rhodecode/templates/admin/repos/repo_add_base.html <<'EOF'
---- ./templates/admin/repos/repo_add_base.html.orig     2012-06-10 12:17:31.469484793 -0300
-+++ ./templates/admin/repos/repo_add_base.html  2012-06-10 12:17:47.909470152 -0300
-@@ -38,7 +38,7 @@
-                 <label for="repo_type">${_('Type')}:</label>
-             </div>
-             <div class="input">
--                ${h.select('repo_type','hg',c.backends,class_="small")}
-+                ${h.select('repo_type','git',c.backends,class_="small")}
-                 <span class="help-block">${_('Type of repository to create.')}</span>
-             </div>
-          </div>
-EOF
+sed -i.original -e "s/'hg'/'git'/" ~/venv/lib/python*/site-packages/RhodeCode*.egg/rhodecode/templates/admin/repos/repo_add_base.html
 
 # Enable needed Apache modules
 sudo a2enmod proxy_http rewrite ssl headers
@@ -345,17 +333,7 @@ sudo patch /etc/apache2/ports.conf <<'EOF'
 
 EOF
 
-sudo patch /etc/apache2/sites-available/default-ssl <<'EOF'
---- default-ssl.orig    2012-06-10 19:09:01.693695635 -0300
-+++ default-ssl 2012-06-10 19:09:10.973694566 -0300
-@@ -1,5 +1,5 @@
- <IfModule mod_ssl.c>
--<VirtualHost _default_:443>
-+<VirtualHost *:443>
-	ServerAdmin webmaster@localhost
-
-	DocumentRoot /var/www
-EOF
+sudo sed -i.original -e "s/_default_/*/" /etc/apache2/sites-available/default-ssl
 
 # Create and enable VirtualHosts for git
 cat >$TMPDIR/git <<EOF
