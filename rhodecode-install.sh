@@ -103,16 +103,15 @@ if [ $SKIP_INSTALL -eq 0 ]; then
     sudo rabbitmqctl add_user ${RC_ADMIN} ${RC_PWD}
     sudo rabbitmqctl add_vhost rhodevhost
     sudo rabbitmqctl set_permissions -p rhodevhost ${RC_ADMIN} ".*" ".*" ".*"
-
-    # Configure RhodeCode
-    cd ~/rhodecode
-    paster make-config RhodeCode production.ini
 else
     set +u
     source ~/venv/bin/activate
     set -u
-    cd ~/rhodecode
 fi
+
+# Configure RhodeCode
+cd ~/rhodecode
+paster make-config RhodeCode production.ini
 
 patch production.ini <<EOF
 --- production.ini.orig 2012-05-29 10:42:14.197177952 -0300
