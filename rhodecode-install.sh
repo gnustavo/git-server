@@ -372,4 +372,9 @@ sudo cp $TMPDIR/git-ssl /etc/apache2/sites-available/
 
 sudo a2ensite git git-ssl
 
-# TODO: Setting up Whoosh full text search
+# Setting up Whoosh full text search
+cd ~/rhodecode
+paster make-index production.ini
+crontab -l >$TMPDIR/cron || true
+echo '@daily cd rhodecode; /home/git/venv/bin/paster make-index production.ini' >>$TMPDIR/cron
+crontab $TMPDIR/cron
