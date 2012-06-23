@@ -151,6 +151,23 @@ patch production.ini <<EOF
  
  ## prefix to add to link to indicate it's an url
  ## #314 will be replaced by 
+@@ -101,12 +101,12 @@
+ ####################################
+ ###        CELERY CONFIG        ####
+ ####################################
+-use_celery = false
++use_celery = true
+ broker.host = localhost
+-broker.vhost = rabbitmqhost
++broker.vhost = rhodevhost
+ broker.port = 5672
+-broker.user = rabbitmq
+-broker.password = qweqwe
++broker.user = ${RC_ADMIN}
++broker.password = ${RC_PWD}
+ 
+ celery.imports = rhodecode.lib.celerylib.tasks
+
 EOF
 
 # Create directories for repos
