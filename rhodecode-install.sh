@@ -74,6 +74,8 @@ ${ISSUE_SERVER_LINK}
 ${REPOS_DIR}
 ${RC_ADMIN}
 ${RC_PWD}
+${RMQ_USER}
+${RMQ_PASS}
 EOF
 
 if [ $SKIP_INSTALL -eq 0 ]; then
@@ -100,9 +102,9 @@ if [ $SKIP_INSTALL -eq 0 ]; then
     easy_install rhodecode
 
     # Configure RabbitMQ
-    sudo rabbitmqctl add_user ${RC_ADMIN} ${RC_PWD}
+    sudo rabbitmqctl add_user ${RMQ_USER} ${RMQ_PASS}
     sudo rabbitmqctl add_vhost rhodevhost
-    sudo rabbitmqctl set_permissions -p rhodevhost ${RC_ADMIN} ".*" ".*" ".*"
+    sudo rabbitmqctl set_permissions -p rhodevhost ${RMQ_USER} ".*" ".*" ".*"
 else
     set +u
     source ~/venv/bin/activate
@@ -162,8 +164,8 @@ patch production.ini <<EOF
  broker.port = 5672
 -broker.user = rabbitmq
 -broker.password = qweqwe
-+broker.user = ${RC_ADMIN}
-+broker.password = ${RC_PWD}
++broker.user = ${RMQ_USER}
++broker.password = ${RMQ_PASS}
  
  celery.imports = rhodecode.lib.celerylib.tasks
 
