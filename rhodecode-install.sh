@@ -352,8 +352,9 @@ cat >$TMPDIR/git-ssl <<EOF
     <VirtualHost *:443>
         ServerName ${SERVERNAME}
         SSLEngine on
-        SSLCertificateFile ${CERT_PEM}
+        SSLCertificateFile ${CERT_FILE}
         SSLCertificateKeyFile ${CERT_KEY}
+        SSLCertificateChainFile ${CERT_CHAIN_FILE}
         BrowserMatch ".*MSIE.*" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0
 
         RewriteEngine On
