@@ -4,31 +4,30 @@ Git Server
 Scripts to automatize the configuration of a Git system on a Ubuntu
 server.
 
-Currently there are scripts to install a
-[Gitorious](http://gitorious.org/) or a
-[RhodeCode](http://rhodecode.org/) based server. You must choose one
-of them, because they aren't meant to be independent.
+Currently we install a [RhodeCode](http://rhodecode.org/) based
+server.
 
-The Gitorious script is heavilly inspired in [this blog
-post](http://coding-journal.com/installing-gitorious-on-ubuntu-11-04/),
-but it was developed on a Ubuntu Server 12.04.
-
-They're still very crude. Follow this instructions:
+The scripts are still very crude. Follow this instructions:
 
 * Install a Ubuntu Server 12.04 machine from scratch.
-* Create a user called `git` and log in to it.
-* Copy the files `SYSTEM-install.sh` and `SYSTEM-install.config`,
-  corresponding to the system you want, to git's `$HOME`.
-* Edit `SYSTEM-install.config` according to your environment.
-* Run `./SYSTEM-install.sh SYSTEM-install.config` as the git user.
-* Reboot.
+* Create a user called `git` and make it be able to sudo root.
+* Install the `git` package.
+* Log in as `git` and do as follows:
 
-The script uses `sudo` in order to invoke some commands as root. So,
+    $ git clone git://github.com/gnustavo/git-server.git
+    $ cd git-server
+    $ cp server.conf.template server.conf
+    $ edit server.conf
+    $ ./install.sh
+
+You must edit the file `server.conf` according with your environment,
+following the comments in it.
+
+The `install.sh` script simply runs the other scripts in this repo to
+install RhodeCode, and then to build a local git binary.
+
+The scripts use `sudo` in order to invoke some commands as root. So,
 you'll need to enable the git user to invoke sudo.
 
-If all goes well you'll only have to enter the SYSTEM administrator
-login and password after the end of the installation.
-
 At the end you should be able to point your browser to the
-`SERVERNAME` as configured in `SYSTEM-install.config` and log in as
-admin or as any user in your LDAP directory.
+`SERVERNAME` as configured in `SYSTEM-install.config`.
