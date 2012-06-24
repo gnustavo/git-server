@@ -14,11 +14,11 @@ The scripts are still very crude. Follow this instructions:
 * Install the `git` package.
 * Log in as `git` and do as follows:
 
-    $ git clone git://github.com/gnustavo/git-server.git
-    $ cd git-server
-    $ cp server.conf.template server.conf
-    $ edit server.conf
-    $ ./install.sh
+	$ git clone git://github.com/gnustavo/git-server.git
+	$ cd git-server
+	$ cp server.conf.template server.conf
+	$ edit server.conf
+	$ ./install.sh
 
 You must edit the file `server.conf` according with your environment,
 following the comments in it.
