@@ -19,103 +19,28 @@
 set -eu
 IFS=`printf '\n\t'`
 
-USAGE="usage: `basename $0` [-sq] CONFIGFILE"
-SKIP_INSTALL=0
-QUIET=0
-while getopts :sq OPT; do
-    case $OPT in
-	s) SKIP_INSTALL=1 ;;
-	q) QUIET=1 ;;
-	*)
-	    echo >&2 $USAGE 
-	    exit 2
-    esac
-done
-shift `expr $OPTIND - 1`
+# Install needed packages
+sudo apt-get -y install python-virtualenv python-ldap libsasl2-dev git python-dev apache2 rabbitmq-server
 
-# Check environment
-if [ `id -run` != git ]; then
-    echo "ERROR: You should run me as user 'git', not '`id -run`'." >&2
-    exit 1
-fi
+# Setup virtual environment for Python
+virtualenv --no-site-packages ~/venv
+set +u
+source ~/venv/bin/activate
+set -u
 
-DISTRIB_OK='Ubuntu 12.04 LTS'
-source /etc/lsb-release
-if [ "$DISTRIB_DESCRIPTION" != "$DISTRIB_OK" ]; then
-    echo "ERROR: I'm prepared to run on '$DISTRIB_OK', not on '$DISTRIB_DESCRIPTION'." >&2
-    exit 1
-fi
+# Install RhodeCode
+mkdir -p ~/rhodecode
+(cd ~/rhodecode; easy_install rhodecode)
 
-if [ "$#" -eq 1 ]; then
-    CONFIG="$1"
-else
-    echo >&2 $USAGE
-    exit 1
-fi
-
-TMPDIR=`mktemp -d /tmp/tmp.XXXXXXXXXX` || exit 1
-trap "rm -rf $TMPDIR" EXIT
-
-if [ $QUIET -eq 0 ]; then
-    set -x
-fi
-
-# Grok configuration
-source "$CONFIG"
-
-# Check if all config variable are set
-cat >/dev/null <<EOF
-${EMAIL_TO}
-${ERROR_EMAIL_FROM}
-${APP_EMAIL_FROM}
-${SMTP_SERVER}
-${ISSUE_PAT}
-${ISSUE_SERVER_LINK}
-${REPOS_DIR}
-${RC_ADMIN}
-${RC_PWD}
-${RMQ_USER}
-${RMQ_PASS}
-EOF
-
-if [ $SKIP_INSTALL -eq 0 ]; then
-    # Create the git users SSH directory if it doesn't already exist
-    mkdir -p ~/.ssh && chmod 700 ~/.ssh
-
-    # Install needed packages
-    sudo apt-get -y install python-virtualenv python-ldap libsasl2-dev git python-dev apache2 rabbitmq-server
-
-    # Set up git
-    git config --global user.name "$GIT_USER_NAME"
-    git config --global user.email "$GIT_USER_EMAIL"
-    git config --global color.ui true
-
-    # Setup virtual environment for Python
-    virtualenv --no-site-packages ~/venv
-    set +u
-    source ~/venv/bin/activate
-    set -u
-
-    # Install RhodeCode
-    mkdir -p ~/rhodecode
-    cd ~/rhodecode
-    easy_install rhodecode
-
-    # Configure RabbitMQ
-    sudo rabbitmqctl add_user ${RMQ_USER} ${RMQ_PASS}
-    sudo rabbitmqctl add_vhost rhodevhost
-    sudo rabbitmqctl set_permissions -p rhodevhost ${RMQ_USER} ".*" ".*" ".*"
-else
-    set +u
-    source ~/venv/bin/activate
-    set -u
-fi
+# Configure RabbitMQ
+sudo rabbitmqctl add_user ${RMQ_USER} ${RMQ_PASS}
+sudo rabbitmqctl add_vhost rhodevhost
+sudo rabbitmqctl set_permissions -p rhodevhost ${RMQ_USER} ".*" ".*" ".*"
 
 # Configure RhodeCode
-cd ~/rhodecode
-paster make-config RhodeCode production.ini
+(cd ~/rhodecode; paster make-config RhodeCode production.ini)
 
-patch production.ini <<EOF
+patch ~/rhodecode/production.ini <<EOF
 --- production.ini.orig 2012-05-29 10:42:14.197177952 -0300
 +++ production.ini.new  2012-05-29 10:50:12.205185304 -0300
 @@ -13,13 +13,13 @@
@@ -175,17 +100,15 @@ EOF
 mkdir -p "$REPOS_DIR"
 
 # Setup Rhodecode
-cd ~/rhodecode
-echo y | paster setup-rhodecode \
+echo y | (cd ~/rhodecode; paster setup-rhodecode \
     --user="$RC_ADMIN" \
     --password="$RC_PWD" \
     --email="$EMAIL_TO" \
     --repos="$REPOS_DIR" \
-    production.ini
+    production.ini)
 
 # Configure filter prefix
-cd ~/rhodecode
-patch production.ini <<'EOF'
+(cd ~/rhodecode; patch production.ini) <<'EOF'
 --- production.ini.1    2012-06-12 21:52:18.522894535 -0300
 +++ production.ini      2012-06-12 21:52:12.603931008 -0300
 @@ -57,6 +57,7 @@
@@ -374,8 +297,7 @@ sudo cp $TMPDIR/git-ssl /etc/apache2/sites-available/
 sudo a2ensite git git-ssl
 
 # Setting up Whoosh full text search
-cd ~/rhodecode
-paster make-index production.ini
+(cd ~/rhodecode; paster make-index production.ini)
 crontab -l >$TMPDIR/cron || true
 echo '@daily cd rhodecode; /home/git/venv/bin/paster make-index production.ini' >>$TMPDIR/cron
 crontab $TMPDIR/cron
