@@ -15,28 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html
-set -eu
-IFS=`printf '\n\t'`
+IDIR=`dirname $0`
+source "$IDIR"/prelude.sh
 
-USAGE="usage: `basename $0` [-v] [--] TAG"
-while getopts :nv OPT; do
-    case $OPT in
-	v)
-	    set -x
-	    ;;
-	*)
-	    echo $USAGE
-	    exit 2
-    esac
-done
-shift `expr $OPTIND - 1`
+USAGE="usage: `basename $0` [TAG]"
 
-TAG="$1"
-if [ -z "$TAG" ]; then
-    echo $USAGE
-    echo "Missing TAG"
-    exit 2
+if [ $# -eq 1 ]; then
+    TAG="$1"
+else
+    TAG=`(cd ~/git; git tag -l) | grep '^v[0-9.]*$' | sort --version-sort | tail -1`
+    echo >&2 "# Building latest release TAG: $TAG."
 fi
 
 cd ~/git
@@ -50,15 +38,29 @@ git archive --format=tar "$TAG" | tar -C "$DIR" -x
 
 cd "$DIR"
 
+# Create build and deployment directories
+mkdir -p ~/{bin,src}
+
+# Create stow dir
+if [ ! -d ~/stow ]; then
+    mkdir ~/stow
+    FIRSTTIME=yes
+fi
+
 make prefix="$HOME/stow/$GIT" install
 
-cat <<EOF
+if [ -n "$FIRSTTIME" ]; then
+    cd ~/stow
+    stow $GIT
+else
+    cat <<EOF
 
 Git $TAG installed in $HOME/stow/$GIT.
 To enable it you must do this:
 
   cd ~/stow
-  stow -D \$STOWED_GIT
+  stow -D CURRENTLY_STOWED_GIT
   stow $GIT
 
 EOF
+fi

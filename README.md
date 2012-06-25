@@ -10,24 +10,42 @@ server.
 The scripts are still very crude. Follow this instructions:
 
 * Install a Ubuntu Server 12.04 machine from scratch.
-* Create a user called `git` and make it be able to sudo root.
-* Install the `git` package.
-* Log in as `git` and do as follows:
+* Create a system user called `git` so that it's able to sudo root:
 
+	# useradd -r -m git
+
+* Install the `git` package:
+
+	# apt-get install git
+
+* Log in as `git` and clone this repo:
+
+	# su - git
 	$ git clone git://github.com/gnustavo/git-server.git
 	$ cd git-server
+
+* Copy the configuration template and edit it according to your
+  environment following the instructions in its comments.
+
 	$ cp server.conf.template server.conf
 	$ edit server.conf
-	$ ./install.sh
 
-You must edit the file `server.conf` according with your environment,
-following the comments in it.
+* Bootstrap the installation process, to check the configuration,
+  install basic packages, clone the Git repository, and setup the
+  environment.
 
-The `install.sh` script simply runs the other scripts in this repo to
-install RhodeCode, and then to build a local git binary.
+	$ ./bootstrap.sh
 
-The scripts use `sudo` in order to invoke some commands as root. So,
-you'll need to enable the git user to invoke sudo.
+* Build and install git. This is going to install the latest git in
+  `/home/git/bin/git`. The script will be linked to
+  `/home/git/bin/install-git.sh` so that it can be used later to
+  install newer versions as they become available.
+
+	$ ./install-git.sh
+
+* Install RhodeCode.
+
+	$ ./install-rhodecode.sh
 
 At the end you should be able to point your browser to the
 `SERVERNAME` as configured in `SYSTEM-install.config`.

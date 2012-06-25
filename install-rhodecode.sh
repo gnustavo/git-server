@@ -15,12 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html
-set -eu
-IFS=`printf '\n\t'`
+IDIR=`dirname $0`
+source "$IDIR"/server.conf
+source "$IDIR"/prelude.sh
 
-# Install needed packages
-sudo apt-get -y install python-virtualenv python-ldap libsasl2-dev git python-dev apache2 rabbitmq-server
+# Check if all config variables are set
+cat >/dev/null <<EOF
+${EMAIL_TO}
+${ERROR_EMAIL_FROM}
+${APP_EMAIL_FROM}
+${SMTP_SERVER}
+${ISSUE_PAT}
+${ISSUE_SERVER_LINK}
+${REPOS_DIR}
+${RC_ADMIN}
+${RC_PWD}
+${RMQ_USER}
+${RMQ_PASS}
+EOF
 
 # Setup virtual environment for Python
 virtualenv --no-site-packages ~/venv
@@ -33,9 +45,13 @@ mkdir -p ~/rhodecode
 (cd ~/rhodecode; easy_install rhodecode)
 
 # Configure RabbitMQ
-sudo rabbitmqctl add_user ${RMQ_USER} ${RMQ_PASS}
-sudo rabbitmqctl add_vhost rhodevhost
-sudo rabbitmqctl set_permissions -p rhodevhost ${RMQ_USER} ".*" ".*" ".*"
+if sudo rabbitmqctl list_vhosts | grep -q rhodevhost; then
+    : rabbitmqctl is already configured
+else
+    sudo rabbitmqctl add_user ${RMQ_USER} ${RMQ_PASS}
+    sudo rabbitmqctl add_vhost rhodevhost
+    sudo rabbitmqctl set_permissions -p rhodevhost ${RMQ_USER} ".*" ".*" ".*"
+fi
 
 # Configure RhodeCode
 (cd ~/rhodecode; paster make-config RhodeCode production.ini)
@@ -144,6 +160,7 @@ cat >$TMPDIR/rhodecode <<'EOF'
 ### END INIT INFO
 
 USER=git
+PATH=/home/$USER/bin:$PATH
 
 VENV_DIR=/home/git/venv
 DATA_DIR=/home/git/rhodecode
@@ -244,18 +261,23 @@ sed -i.original -e "s/'hg'/'git'/" ~/venv/lib/python*/site-packages/RhodeCode*.e
 sudo a2enmod proxy_http rewrite ssl headers
 
 # Change Apache configuration for SSL Virtual Hosts.
-sudo patch /etc/apache2/ports.conf <<'EOF'
+if grep -q PaTcHeD /etc/apache2/ports.conf; then
+    : /etc/apache2/ports.conf is already patched
+else
+    sudo patch /etc/apache2/ports.conf <<'EOF'
 --- ports.conf.orig     2012-06-10 18:16:29.097552822 -0300
 +++ ports.conf  2012-06-10 18:16:52.385551176 -0300
-@@ -14,6 +14,7 @@
+@@ -14,6 +14,8 @@
      # to <VirtualHost *:443>
      # Server Name Indication for SSL named virtual hosts is currently not
      # supported by MSIE on Windows XP.
++    # PaTcHeD
 +    NameVirtualHost *:443
      Listen 443
  </IfModule>
 
 EOF
+fi
 
 sudo sed -i.original -e "s/_default_/*/" /etc/apache2/sites-available/default-ssl
 
@@ -299,8 +321,12 @@ sudo a2ensite git git-ssl
 # Setting up Whoosh full text search
 (cd ~/rhodecode; paster make-index production.ini)
 crontab -l >$TMPDIR/cron || true
-echo '@daily cd rhodecode; /home/git/venv/bin/paster make-index production.ini' >>$TMPDIR/cron
-crontab $TMPDIR/cron
+if grep -q rhodecode $TMPDIR/cron; then
+    : crontab already configured
+else
+    echo '@daily cd rhodecode; /home/git/venv/bin/paster make-index production.ini' >>$TMPDIR/cron
+    crontab $TMPDIR/cron
+fi
 
 # Start up everything
 sudo service rhodecode start

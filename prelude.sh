@@ -19,19 +19,6 @@
 set -eu
 IFS=`printf '\n\t'`
 
-USAGE="usage: `basename $0` [-s] CONFIGFILE"
-SKIP_INSTALL=0
-CONFIG=server.conf
-while getopts :sq OPT; do
-    case $OPT in
-	s) SKIP_INSTALL=1 ;;
-	*)
-	    echo >&2 $USAGE 
-	    exit 2
-    esac
-done
-shift `expr $OPTIND - 1`
-
 # Check environment
 if [ `id -run` != git ]; then
     echo "ERROR: You should run me as user 'git', not '`id -run`'." >&2
@@ -45,54 +32,7 @@ if [ "$DISTRIB_DESCRIPTION" != "$DISTRIB_OK" ]; then
     exit 1
 fi
 
-if [ "$#" -eq 1 ]; then
-    CONFIG="$1"
-fi
-
 TMPDIR=`mktemp -d /tmp/tmp.XXXXXXXXXX` || exit 1
 trap "rm -rf $TMPDIR" EXIT
 
 set -x
-
-# Grok configuration
-source "$CONFIG"
-
-# Check if all config variables are set
-cat >/dev/null <<EOF
-${GITURL}
-${EMAIL_TO}
-${ERROR_EMAIL_FROM}
-${APP_EMAIL_FROM}
-${SMTP_SERVER}
-${ISSUE_PAT}
-${ISSUE_SERVER_LINK}
-${REPOS_DIR}
-${RC_ADMIN}
-${RC_PWD}
-${RMQ_USER}
-${RMQ_PASS}
-EOF
-
-# Bootstrap local Git installation
-source ./git-bootstrap.sh
-
-# Find out the name of the most recent Git release tag
-GITTAG=`(cd ~/git; git tag -l) | grep '^v[0-9.]*$' | sort --version-sort | tail -1`
-
-# Add ~/bin to the front of PATH and link scripts there
-PATH=~/bin:$PATH
-ln -s $PWD/git-install.sh ~/bin
-
-# Install last Git release
-~/bin/git-install.sh -v $GITTAG
-
-# Stow it
-(cd ~/stow; stow git-$GITTAG)
-
-# Set up git
-git config --global user.name "$GIT_USER_NAME"
-git config --global user.email "$GIT_USER_EMAIL"
-git config --global color.ui true
-
-# Install RhodeCode
-source ./rhodecode-install.sh
