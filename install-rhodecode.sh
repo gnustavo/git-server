@@ -297,6 +297,7 @@ cat >$TMPDIR/git-ssl <<EOF
     <VirtualHost *:443>
         ServerName ${SERVERNAME}
         SSLEngine on
+        SSLProxyEngine on
         SSLCertificateFile ${CERT_FILE}
         SSLCertificateKeyFile ${CERT_KEY}
         SSLCertificateChainFile ${CERT_CHAIN_FILE}
@@ -308,6 +309,7 @@ cat >$TMPDIR/git-ssl <<EOF
         <Location /r>
             RewriteEngine On
             RewriteRule /(r.*) http://127.0.0.1:5000/\$1 [L,P]
+            SetEnvIf X-Url-Scheme https HTTPS=1
         </Location>
     </VirtualHost>
 </IfModule>
