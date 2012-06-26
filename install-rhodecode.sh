@@ -307,9 +307,7 @@ cat >$TMPDIR/git-ssl <<EOF
 
         <Location /rhodecode>
             RewriteEngine On
-            RewriteRule /(rhodecode.*) http://127.0.0.1:5000/\$1 [L,P,E=RU:%{REMOTE_USER}]
-
-            RequestHeader set X-Forwarded-User %{RU}e
+            RewriteRule /(rhodecode.*) http://127.0.0.1:5000/\$1 [L,P]
         </Location>
     </VirtualHost>
 </IfModule>
