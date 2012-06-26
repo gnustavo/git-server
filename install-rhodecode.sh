@@ -142,7 +142,7 @@ echo y | (cd ~/rhodecode; paster setup-rhodecode \
 +
 +[filter:proxy-prefix]
 +use = egg:PasteDeploy#prefix
-+prefix = /rhodecode
++prefix = /r
 +
 EOF
 
@@ -303,11 +303,11 @@ cat >$TMPDIR/git-ssl <<EOF
         BrowserMatch ".*MSIE.*" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0
 
         RewriteEngine On
-        RewriteRule ^/\$ /rhodecode [R,L]
+        RewriteRule ^/\$ /r [R,L]
 
-        <Location /rhodecode>
+        <Location /r>
             RewriteEngine On
-            RewriteRule /(rhodecode.*) http://127.0.0.1:5000/\$1 [L,P]
+            RewriteRule /(r.*) http://127.0.0.1:5000/\$1 [L,P]
         </Location>
     </VirtualHost>
 </IfModule>
