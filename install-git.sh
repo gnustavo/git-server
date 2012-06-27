@@ -29,6 +29,8 @@ fi
 
 cd ~/git
 
+git pull
+
 GIT="git-$TAG"
 DIR="$HOME/src/$GIT"
 
