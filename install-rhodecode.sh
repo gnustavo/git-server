@@ -42,7 +42,7 @@ set -u
 
 # Install RhodeCode
 mkdir -p ~/rhodecode
-(cd ~/rhodecode; easy_install rhodecode)
+(cd ~/rhodecode; easy_install rhodecode python_ldap)
 
 # Configure RabbitMQ
 if sudo rabbitmqctl list_vhosts | grep -q rhodevhost; then

@@ -47,7 +47,7 @@ sudo apt-get install gettext git libcurl4-gnutls-dev libexpat1-dev \
 
 # Install packages needed to build RhodeCode.
 sudo apt-get -y install apache2 libsasl2-dev python-dev \
-    python-ldap python-virtualenv rabbitmq-server
+    python-virtualenv rabbitmq-server
 
 # Create the git users SSH directory if it doesn't already exist
 mkdir -p ~/.ssh && chmod 700 ~/.ssh
