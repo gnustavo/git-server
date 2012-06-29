@@ -42,7 +42,7 @@ set -u
 
 # Install RhodeCode
 mkdir -p ~/rhodecode
-(cd ~/rhodecode; easy_install rhodecode python_ldap)
+(cd ~/rhodecode; easy_install rhodecode python_ldap waitress)
 
 # Configure RabbitMQ
 if sudo rabbitmqctl list_vhosts | grep -q rhodevhost; then
@@ -78,6 +78,26 @@ patch ~/rhodecode/production.ini <<EOF
  #smtp_username = 
  #smtp_password = 
  #smtp_port = 
+@@ -30,15 +30,15 @@
+
+ [server:main]
+ ##nr of threads to spawn
+-threadpool_workers = 5
++#threadpool_workers = 5
+
+ ##max request before thread respawn
+-threadpool_max_requests = 10
++#threadpool_max_requests = 10
+
+ ##option to use threads of process
+-use_threadpool = true
++#use_threadpool = true
+
+-use = egg:Paste#http
++use = egg:waitress#main
+ host = 127.0.0.1
+ port = 5000
+
 @@ -75,12 +75,12 @@
  ## default one used here is # with a regex passive group for `#`
  ## {id} will be all groups matched from this pattern
