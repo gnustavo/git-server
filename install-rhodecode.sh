@@ -277,6 +277,9 @@ sudo update-rc.d rhodecode defaults
 # Make git the default repository type
 sed -i.original -e "s/'hg'/'git'/" ~/venv/lib/python*/site-packages/RhodeCode*.egg/rhodecode/templates/admin/repos/repo_add_base.html
 
+# Disable Mercurial
+sed -i.original -e "s/'hg'/#&/" ~/venv/lib/python*/site-packages/RhodeCode*.egg/rhodecode/__init__.py
+
 # Enable needed Apache modules
 sudo a2enmod proxy_http rewrite ssl headers
 
