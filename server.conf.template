@@ -15,8 +15,8 @@ GIT_USER_EMAIL='you@example.com'
 SERVERNAME=git.example.com
 
 # Path names for the SSL certificate that Apache will use.
-CERT_FILE=/etc/ssl/certs/git.example.com.pem
-CERT_KEY=/etc/ssl/private/git.example.com.key
+CERT_FILE=/etc/ssl/certs/ssl-cert-snakeoil.pem
+CERT_KEY=/etc/ssl/private/ssl-cert-snakeoil.key
 CERT_CHAIN_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Rhodecode email addresses
