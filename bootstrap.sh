@@ -58,12 +58,6 @@ mkdir -p ~/.ssh && chmod 700 ~/.ssh
 # Setup Git origin URL
 (cd ~/git; git remote set-url origin git://git.kernel.org/pub/scm/git/git.git)
 
-# Add ~/bin to the front of PATH and link some scripts there
-mkdir -p ~/bin
-for i in install-git.sh prelude.sh; do
-    ln -s "$IDIR"/$i ~/bin
-done
-
 # Set up git
 git config --global user.name "$GIT_USER_NAME"
 git config --global user.email "$GIT_USER_EMAIL"
