@@ -10,7 +10,7 @@ GITURL=git://git.kernel.org/pub/scm/git/git.git
 GIT_USER_NAME='Your Name'
 GIT_USER_EMAIL='you@example.com'
 
-# Domain name that users will use to access the Gitorious web
+# Domain name that users will use to access the RhodeCode web
 # interface. It should be a FQDN.
 SERVERNAME=git.example.com
 
