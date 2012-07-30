@@ -42,7 +42,7 @@ set -u
 
 # Install RhodeCode
 mkdir -p ~/rhodecode
-(cd ~/rhodecode; easy_install rhodecode python_ldap waitress)
+(cd ~/rhodecode; easy_install https://secure.rhodecode.org/rhodecode/archive/beta.zip python_ldap waitress)
 
 # Configure RabbitMQ
 if sudo rabbitmqctl list_vhosts | grep -q rhodevhost; then
@@ -78,42 +78,23 @@ patch ~/rhodecode/production.ini <<EOF
  #smtp_username = 
  #smtp_password = 
  #smtp_port = 
-@@ -30,15 +30,15 @@
-
- [server:main]
- ##nr of threads to spawn
--threadpool_workers = 5
-+#threadpool_workers = 5
-
- ##max request before thread respawn
--threadpool_max_requests = 10
-+#threadpool_max_requests = 10
-
- ##option to use threads of process
--use_threadpool = true
-+#use_threadpool = true
-
--use = egg:Paste#http
-+use = egg:waitress#main
- host = 127.0.0.1
- port = 5000
-
-@@ -75,12 +75,12 @@
- ## default one used here is # with a regex passive group for `#`
+@@ -84,13 +84,13 @@
+ ## default one used here is #<numbers> with a regex passive group for `#`
  ## {id} will be all groups matched from this pattern
  
 -issue_pat = (?:\s*#)(\d+)
 +issue_pat = ${ISSUE_PAT}
  
  ## server url to the issue, each {id} will be replaced with match
- ## fetched from the regex and {repo} is replaced with repository name
+ ## fetched from the regex and {repo} is replaced with full repository name
+ ## including groups {repo_name} is replaced with just name of repo
  
 -issue_server_link = https://myissueserver.com/{repo}/issue/{id}
 +issue_server_link = ${ISSUE_SERVER_LINK}
  
  ## prefix to add to link to indicate it's an url
- ## #314 will be replaced by 
-@@ -101,12 +101,12 @@
+ ## #314 will be replaced by <issue_prefix><id>
+@@ -111,12 +111,12 @@
  ####################################
  ###        CELERY CONFIG        ####
  ####################################
@@ -147,7 +128,7 @@ echo y | (cd ~/rhodecode; paster setup-rhodecode \
 (cd ~/rhodecode; patch production.ini) <<'EOF'
 --- production.ini.1    2012-06-12 21:52:18.522894535 -0300
 +++ production.ini      2012-06-12 21:52:12.603931008 -0300
-@@ -57,6 +57,7 @@
+@@ -66,6 +66,7 @@
  container_auth_enabled = false
  proxypass_auth_enabled = false
  default_encoding = utf8
@@ -155,7 +136,7 @@ echo y | (cd ~/rhodecode; paster setup-rhodecode \
 
  ## overwrite schema of clone url
  ## available vars:
-@@ -314,3 +315,8 @@
+@@ -329,3 +329,8 @@
  class=rhodecode.lib.colored_formatter.ColorFormatterSql
  format= %(asctime)s.%(msecs)03d %(levelname)-5.5s [%(name)s] %(message)s
  datefmt = %Y-%m-%d %H:%M:%S
