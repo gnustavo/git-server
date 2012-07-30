@@ -47,11 +47,13 @@ mkdir -p ~/{bin,src}
 if [ ! -d ~/stow ]; then
     mkdir ~/stow
     FIRSTTIME=yes
+else
+    FIRSTTIME=no
 fi
 
 make prefix="$HOME/stow/$GIT" install
 
-if [ -n "$FIRSTTIME" ]; then
+if [ $FIRSTTIME = yes ]; then
     cd ~/stow
     stow $GIT
 else
