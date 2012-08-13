@@ -286,9 +286,11 @@ fi
 sudo sed -i.original -e "s/_default_/*/" /etc/apache2/sites-available/default-ssl
 
 # Create and enable VirtualHosts for git
+SERVERALIAS=`basename ${SERVERNAME}`
 cat >$TMPDIR/git <<EOF
 <VirtualHost *:80>
     ServerName ${SERVERNAME}
+    ServerAlias ${SERVERALIAS}
 
     RewriteEngine On
     RewriteRule ^/(.*) https://${SERVERNAME}/\$1 [R,L]
@@ -306,6 +308,7 @@ cat >$TMPDIR/git-ssl <<EOF
 <IfModule mod_ssl.c>
     <VirtualHost *:443>
         ServerName ${SERVERNAME}
+        ServerAlias ${SERVERALIAS}
         SSLEngine on
         SSLProxyEngine on
         SSLCertificateFile ${CERT_FILE}
