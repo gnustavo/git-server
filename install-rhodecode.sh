@@ -21,6 +21,7 @@ source "$IDIR"/prelude.sh
 
 # Check if all config variables are set
 cat >/dev/null <<EOF
+${GITHOME}
 ${EMAIL_TO}
 ${ERROR_EMAIL_FROM}
 ${APP_EMAIL_FROM}
@@ -161,10 +162,10 @@ cat >$TMPDIR/rhodecode <<'EOF'
 ### END INIT INFO
 
 USER=git
-PATH=/home/$USER/bin:$PATH
+PATH=${GITHOME}/bin:$PATH
 
-VENV_DIR=/home/git/venv
-DATA_DIR=/home/git/rhodecode
+VENV_DIR=${GITHOME}/venv
+DATA_DIR=${GITHOME}/rhodecode
 
 CELERY_ARGS="$VENV_DIR/bin/paster celeryd $DATA_DIR/production.ini"
 RHODECODE_ARGS="$VENV_DIR/bin/paster serve $DATA_DIR/production.ini"
@@ -337,7 +338,7 @@ crontab -l >$TMPDIR/cron || true
 if grep -q rhodecode $TMPDIR/cron; then
     : crontab already configured
 else
-    echo '@daily cd rhodecode; /home/git/venv/bin/paster make-index production.ini' >>$TMPDIR/cron
+    echo '@daily cd rhodecode; ${GITHOME}/venv/bin/paster make-index production.ini' >>$TMPDIR/cron
     crontab $TMPDIR/cron
 fi
 

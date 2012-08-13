@@ -1,6 +1,9 @@
 # Example configuration file for install.sh. Please, revise and define
 # all variables below for your environment.
 
+# HOME directory of user git
+GITHOME=/home/git
+
 # Git URL for cloning. You may want to specify a local clone in order
 # to speed things up.
 GITURL=git://git.kernel.org/pub/scm/git/git.git
