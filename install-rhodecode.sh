@@ -296,6 +296,12 @@ cat >$TMPDIR/git <<EOF
 EOF
 sudo cp $TMPDIR/git /etc/apache2/sites-available/
 
+if [ -z "${CERT_CHAIN_FILE}" ]; then
+    SSLCCF=
+else
+    SSLCCF="SSLCertificateChainFile ${CERT_CHAIN_FILE}"
+fi
+
 cat >$TMPDIR/git-ssl <<EOF
 <IfModule mod_ssl.c>
     <VirtualHost *:443>
@@ -304,7 +310,7 @@ cat >$TMPDIR/git-ssl <<EOF
         SSLProxyEngine on
         SSLCertificateFile ${CERT_FILE}
         SSLCertificateKeyFile ${CERT_KEY}
-        SSLCertificateChainFile ${CERT_CHAIN_FILE}
+        ${SSLCCF}
         BrowserMatch ".*MSIE.*" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0
 
         RewriteEngine On
