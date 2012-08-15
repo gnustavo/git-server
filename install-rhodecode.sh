@@ -162,6 +162,7 @@ cat >$TMPDIR/rhodecode <<'EOF'
 ### END INIT INFO
 
 USER=git
+GITHOME='XXXGITHOMEXXX'
 PATH=${GITHOME}/bin:$PATH
 
 VENV_DIR=${GITHOME}/venv
@@ -251,6 +252,11 @@ case "$1" in
 esac
 
 exit 0
+EOF
+sudo ed /etc/init.d/rhodecode <<EOF
+/XXXGITHOMEXXX/s:XXXGITHOMEXXX:$GITHOME:
+w
+q
 EOF
 sudo cp $TMPDIR/rhodecode /etc/init.d
 sudo chmod 755 /etc/init.d/rhodecode
