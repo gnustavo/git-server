@@ -25,9 +25,9 @@ if [ `id -run` != git ]; then
     exit 1
 fi
 
-DISTRIB_OK='Ubuntu 12.04 LTS'
+DISTRIB_OK='^Ubuntu 12.04'
 source /etc/lsb-release
-if [ "$DISTRIB_DESCRIPTION" != "$DISTRIB_OK" ]; then
+if [[ "$DISTRIB_DESCRIPTION" =~ $DISTRIB_OK ]]; then
     echo "ERROR: I'm prepared to run on '$DISTRIB_OK', not on '$DISTRIB_DESCRIPTION'." >&2
     exit 1
 fi
