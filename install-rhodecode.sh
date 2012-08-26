@@ -148,6 +148,9 @@ echo y | (cd ~/rhodecode; paster setup-rhodecode \
 +
 EOF
 
+# Setup rcextensions
+(cd ~/rhodecode; paster make-rcext production.ini)
+
 # Based on: https://gist.github.com/2866413#file_rhodecode_init.d.sh
 cat >$TMPDIR/rhodecode <<'EOF'
 #!/bin/sh
