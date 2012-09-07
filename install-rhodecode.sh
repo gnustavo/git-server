@@ -151,6 +151,13 @@ EOF
 # Setup rcextensions
 (cd ~/rhodecode; paster make-rcext production.ini)
 
+# Put ~/rhodecode under git control
+cd ~/rhodecode
+git init
+echo '*' >.gitignore
+git add -f .gitignore production.ini rcextensions/__init__.py
+git commit -m'Initial version'
+
 # Based on: https://gist.github.com/2866413#file_rhodecode_init.d.sh
 cat >$TMPDIR/rhodecode <<'EOF'
 #!/bin/sh
