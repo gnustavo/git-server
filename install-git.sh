@@ -23,7 +23,7 @@ USAGE="usage: `basename $0` [TAG]"
 if [ $# -eq 1 ]; then
     TAG="$1"
 else
-    TAG=`(cd ~/git; git tag -l) | grep '^v[0-9.]*$' | sort --version-sort | tail -1`
+    TAG=`(cd ~/git; git tag -l) | grep '^v[0-9.]*$' | grep -v -- -rc | sort --version-sort | tail -1`
     echo >&2 "# Building latest release TAG: $TAG."
 fi
 
